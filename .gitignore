@@ -3,5 +3,3 @@ __pycache__/
 *.pyc
 .venv/
 .DS_Store
-# real borrower SSNs: share out of band, never commit (per team plan)
-data/borrowers.csv
