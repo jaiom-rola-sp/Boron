@@ -78,9 +78,13 @@ class LoanTests(unittest.TestCase):
 
     def test_unpaid_and_paid_fine(self):
         loan = self.out()
-        self.assertTrue(checkin(loan['loan_id'],self.conn)['success'])
         cur = self.conn.cursor()
-        cur.execute('INSERT INTO FINES VALUES (%s, 1.25, FALSE)', (loan['loan_id'],))
+        # make the loan genuinely 6 days late so refresh_fines keeps the $1.50 fine
+        cur.execute('UPDATE BOOK_LOANS SET Date_out=%s, Due_date=%s WHERE Loan_id=%s',
+                    (date.today()-timedelta(days=20), date.today()-timedelta(days=6), loan['loan_id']))
+        self.conn.commit()
+        self.assertTrue(checkin(loan['loan_id'],self.conn)['success'])
+        cur.execute('INSERT INTO FINES VALUES (%s, 1.50, FALSE)', (loan['loan_id'],))
         self.conn.commit()
         self.assertIn('unpaid fine', checkout(self.books[1],'ID000001',self.conn)['message'])
         self.out(2,'ID000002')
@@ -88,6 +92,15 @@ class LoanTests(unittest.TestCase):
         self.conn.commit()
         self.out(1)
         cur.close()
+
+    def test_late_book_still_out_blocks_checkout_without_manual_refresh(self):
+        cur = self.conn.cursor()
+        cur.execute("INSERT INTO BOOK_LOANS (Isbn, Card_id, Date_out, Due_date) VALUES (%s,'ID000001',%s,%s)",
+                    (self.books[0], date.today()-timedelta(days=20), date.today()-timedelta(days=6)))
+        self.conn.commit()
+        cur.close()
+        self.assertIn('unpaid fine', checkout(self.books[1], 'ID000001', self.conn)['message'])
+        self.out(1, 'ID000002')  # other borrowers are unaffected
 
     def test_search_and_batch_return(self):
         loans = [self.out(i) for i in range(3)]

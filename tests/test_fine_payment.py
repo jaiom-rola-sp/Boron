@@ -45,6 +45,8 @@ class FinePaymentTests(unittest.TestCase):
         sql = self.cursor.execute.call_args.args[0]   
         self.assertIn("GROUP BY bl.Card_id", sql)     
         self.assertIn("WHERE f.Paid = FALSE", sql)   
+        self.assertIn("unreturned_total", sql)
+        self.assertIn("payable_total", sql)
 
     def test_include_paid_fines(self):     
         self.cursor.fetchall.return_value = []    

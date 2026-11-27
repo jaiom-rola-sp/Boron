@@ -27,12 +27,15 @@ def calculate_fine(due_date, date_in=None):
     return (DAILY_RATE * overdue_days).quantize(Decimal("0.01"))
 
 
-def refresh_fines():
-    """Refresh unpaid fines atomically; return success, message and data fields."""
-    conn = None
+def refresh_fines(conn=None):
+    """Refresh unpaid fines atomically; return success, message and data fields.
+
+    Pass conn (idle, no open transaction) to refresh that database instead of the default one.
+    """
+    own = conn is None
     cursor = None
     try:
-        conn = get_connection()
+        conn = conn or get_connection()
         conn.start_transaction()
         cursor = conn.cursor(dictionary=True)
         # Locks prevent a check-in/payment from changing a selected record mid-refresh.
@@ -82,7 +85,7 @@ def refresh_fines():
     finally:
         if cursor is not None:
             cursor.close()
-        if conn is not None:
+        if own and conn is not None:
             conn.close()
 
 
