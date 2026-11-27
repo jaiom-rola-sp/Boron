@@ -25,6 +25,13 @@ This creates the `library` database, applies `database/schema.sql` and loads the
 `BOOK_LOANS` and `FINES` start empty. **Re-running it wipes and reloads all tables.**
 All data is fake. Never commit `.env`.
 
+## Run the command-line menu
+```bash
+python main.py
+```
+A simple text menu to try every feature: search books, check out/in, find loans, create a borrower,
+refresh fines, view fines and pay fines. It only calls the service functions below.
+
 ## Run the tests
 ```bash
 python -m unittest discover tests
@@ -37,7 +44,8 @@ The MySQL user in `.env` needs permission to create databases.
 data/        books.csv, authors.csv, book_authors.csv, borrowers.csv (normalized in Milestone 1)
 database/    schema.sql, database.py (get_connection, run_schema), import_data.py
 services/    search.py, loans.py, borrowers.py, fine_calculator.py, fine_payment.py
-tests/       one test file per service
+main.py      command-line test menu
+tests/       one test file per service, plus test_integration.py (end-to-end flow)
 source_code/ Milestone 1 normalization scripts
 ```
 
