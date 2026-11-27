@@ -69,7 +69,3 @@ python -c "from services.search import search_books; print(search_books('william
 ## Team workflow
 One branch per member, open a PR into `main`, and merge `main` into your branch before opening the PR.
 Do not edit another member's files without telling them.
-
-## Known open question
-Whether fines on unreturned books should block payment of fines on returned books is still to be
-confirmed with the TA. Current behavior: payment is blocked until every fined book is returned.
