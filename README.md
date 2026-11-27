@@ -56,7 +56,7 @@ An active loan is a `BOOK_LOANS` row with `Date_in IS NULL`. Money is `DECIMAL(1
 | Module | Functions | Notes |
 |---|---|---|
 | `services/search.py` | `search_books(query)` | Case-insensitive substring match on ISBN, title and author; every word must match something. Returns ISBN, title, comma-separated authors, availability. |
-| `services/loans.py` | `checkout(isbn, card_id)`, `search_loans(query)`, `checkin(loan_ids)` | Max 3 active loans, no double checkout, no checkout with unpaid fines (fines are refreshed first), due date = today + 14 days. Check-in takes 1-3 loans at once. |
+| `services/loans.py` | `checkout(isbn, card_id)`, `search_loans(query)`, `checkin(loan_ids)` | Max 3 active loans, no double checkout, no checkout with unpaid fines (fines are refreshed first), due date = today + 14 days. Loans can be found by ISBN, card ID and/or name substring (e.g. `ID000001 0195153445`). Check-in takes 1-3 loans at once. |
 | `services/borrowers.py` | `create_borrower(name, ssn, address, phone)`, `generate_card_id()` | Name, SSN and address required; duplicate SSN rejected; IDs follow the `ID000001` format. |
 | `services/fine_calculator.py` | `calculate_fine(due_date, date_in=None)`, `refresh_fines()`, `has_unpaid_fines(card_id)` | $0.25 per late day. Returned books use the return date, outstanding books use today. Paid fines are never changed. |
 | `services/fine_payment.py` | `get_fines(include_paid=False)`, `get_borrower_fines(card_id)`, `pay_fines(card_id)` | Fines grouped per borrower with payable vs. unreturned-book totals. Full payment only, in one transaction; blocked while any fined book is still out. |

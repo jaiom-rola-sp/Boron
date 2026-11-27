@@ -119,6 +119,14 @@ class LoanTests(unittest.TestCase):
         self.assertEqual(cur.fetchone()[0],3)
         cur.close()
 
+    def test_search_combined_terms(self):
+        self.out(0); self.out(1); self.out(2, 'ID000002')
+        self.assertEqual(len(self.find('ID000001 ' + self.books[0])), 1)   # card + isbn
+        self.assertEqual(len(self.find('alice ' + self.books[1])), 1)      # name + isbn
+        self.assertEqual(len(self.find('test alice')), 2)                  # two name words
+        self.assertEqual(self.find('ID000002 ' + self.books[0]), [])       # mismatched pair
+        self.assertEqual(len(self.find('Test Bob')), 1)                    # name containing a space
+
     def test_invalid_batch_rolls_back(self):
         loan = self.out()['loan_id']
         for ids in ([], [loan,loan], [1,2,3,4], [loan,999999], ['1']):

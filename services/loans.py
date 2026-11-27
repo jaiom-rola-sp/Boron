@@ -81,25 +81,36 @@ def checkout(isbn, card_id, conn=None):
 
 
 def search_loans(query, conn=None):
-    """Search active loans by exact ISBN/card ID or case-insensitive name substring."""
+    """Search active loans by ISBN, card ID and/or borrower name substring.
+
+    Each whitespace-separated term must match the ISBN or card ID exactly, or be a substring of
+    the name, so "ID000001 0000000001" or "alice 0000000001" narrow the results. The whole query
+    also matches as one name substring, so names containing spaces still work.
+    """
     if not isinstance(query, str) or not query.strip():
         return _result(False, "Enter an ISBN, borrower ID or borrower name.")
     query = query.strip()
-    pattern = '%' + query.replace('!', '!!').replace('%', '!%').replace('_', '!_') + '%'
+
+    def like(t):
+        return '%' + t.replace('!', '!!').replace('%', '!%').replace('_', '!_') + '%'
+
+    term_cond = """(LOWER(l.Isbn) = LOWER(%s) OR LOWER(l.Card_id) = LOWER(%s)
+                    OR LOWER(r.Bname) LIKE LOWER(%s) ESCAPE '!')"""
+    terms = query.split()
+    where = f"""(LOWER(r.Bname) LIKE LOWER(%s) ESCAPE '!'
+                 OR ({' AND '.join([term_cond] * len(terms))}))"""
+    params = [like(query)] + [p for t in terms for p in (t, t, like(t))]
     own = conn is None
     cur = None
     try:
         conn = conn or get_connection()
         cur = conn.cursor(dictionary=True)
-        cur.execute("""SELECT l.Loan_id AS loan_id, l.Isbn AS isbn, b.Title AS title,
+        cur.execute(f"""SELECT l.Loan_id AS loan_id, l.Isbn AS isbn, b.Title AS title,
                               l.Card_id AS card_id, r.Bname AS bname, l.Date_out AS date_out,
                               l.Due_date AS due_date, l.Date_in AS date_in
                        FROM BOOK_LOANS l JOIN BOOK b ON b.Isbn = l.Isbn
                        JOIN BORROWER r ON r.Card_id = l.Card_id
-                       WHERE l.Date_in IS NULL AND
-                       (LOWER(l.Isbn) = LOWER(%s) OR LOWER(l.Card_id) = LOWER(%s)
-                        OR LOWER(r.Bname) LIKE LOWER(%s) ESCAPE '!') ORDER BY l.Loan_id""",
-                    (query, query, pattern))
+                       WHERE l.Date_in IS NULL AND {where} ORDER BY l.Loan_id""", params)
         data = cur.fetchall()
         for row in data:
             for key in ('date_out', 'due_date'):
