@@ -16,7 +16,10 @@ def get_fines(include_paid=False):
            SELECT bl.Card_id AS card_id,
                   b.Bname AS borrower_name,
                   SUM(f.Fine_amt) AS total_fines,
-                  COUNT(*) AS fine_count
+                  COUNT(*) AS fine_count,
+                  SUM(IF(f.Paid = FALSE AND bl.Date_in IS NOT NULL, f.Fine_amt, 0)) AS payable_total,
+                  SUM(IF(f.Paid = FALSE AND bl.Date_in IS NULL, f.Fine_amt, 0)) AS unreturned_total,
+                  SUM(IF(f.Paid = FALSE AND bl.Date_in IS NULL, 1, 0)) AS unreturned_count
            FROM FINES AS f
            JOIN BOOK_LOANS AS bl ON f.Loan_id = bl.Loan_id
            JOIN BORROWER AS b ON bl.Card_id = b.Card_id

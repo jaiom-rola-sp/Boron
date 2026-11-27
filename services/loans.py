@@ -1,5 +1,6 @@
 from datetime import date, timedelta
 from database.database import get_connection
+from services.fine_calculator import refresh_fines
 
 
 def _result(success, message, data=None):
@@ -44,6 +45,11 @@ def checkout(isbn, card_id, conn=None):
     if not isinstance(isbn, str) or not isinstance(card_id, str) or not isbn.strip() or not card_id.strip():
         return _result(False, "Enter an ISBN and borrower ID.")
     isbn, card_id = isbn.strip(), card_id.strip()
+
+    # Late books still out have no FINES row until a refresh, so refresh before checking fines.
+    refreshed = refresh_fines(conn)
+    if not refreshed["success"]:
+        return _result(False, refreshed["message"])
 
     def operation(cur):
         # Lock the borrower and book so simultaneous checkouts cannot bypass limits.
